@@ -1,0 +1,358 @@
+/* ==========================================================================
+   KICEditor - Dual Accent Theme Color Engine Master Stylesheet
+   Updated: A4 print fidelity, serif body font enforcement for problem/explanation,
+            precise 5-choice layout, offscreen render stabilization
+   ========================================================================== */
+
+:root {
+  /* Site Theme Variables (Monochrome Dark) */
+  --site-bg: #09090b;
+  --sheet-theme-rgb: 107, 33, 168;
+  --sheet-theme-dark-rgb: 76, 29, 149;
+  --sheet-diff-rgb: 30, 58, 138;
+  --paper-a4-width: 210mm;
+  --paper-a4-height: 297mm;
+  --panel-bg: #121214;
+  --card-bg: #18181b;
+  --input-bg: #222226;
+  --hover-bg: #27272a;
+  
+  --border-dark: #1f1f23;
+  --border-muted: #27272a;
+  --border-focus: #52525b;
+
+  --text-main: #f4f4f5;
+  --text-sub: #a1a1aa;
+  --text-dim: #71717a;
+
+  /* Default Main Sheet Theme Variables */
+  --sheet-theme-color: #6b21a8;
+  --sheet-theme-dark: #4c1d95;
+  --sheet-theme-light: #f3e8ff;
+
+  /* Default Difficulty Badge Theme Variables */
+  --sheet-diff-color: #1e3a8a;
+  --sheet-diff-dark: #172554;
+
+  --font-sans: 'Inter', 'Noto Sans KR', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ── 웹폰트 로드(신명·중명조) - fonts 디렉토리에 woff2 파일을 넣어 주세요 ── */
+@font-face {
+  font-family: 'ShinMyungMyeongjo';
+  src: local('신명 중명조'), url('fonts/ShinMyungMyeongjo.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Reset & Global */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background-color: var(--site-bg);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  overflow: hidden;
+}
+
+/* HEADER BAR & ACTIONS */
+.app-header {
+  height: 52px;
+  background-color: #0d0d0f;
+  border-bottom: 1px solid var(--border-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 100;
+  user-select: none;
+}
+
+/* ... header/left/right styles kept from original for brevity; unchanged ... */
+
+/* MAIN CONTAINER & DASHBOARD */
+.app-container { height: calc(100vh - 52px); position: relative; }
+.view-section { width: 100%; height: 100%; display: none; }
+.view-section.active { display: flex; }
+
+/* ... dashboard & sidebar styles unchanged except where page/exam styles below override ... */
+
+/* ==========================================================================
+   RIGHT PANEL: LIVE PREVIEW SHEET (SEOL-MAJI COMPACT SPACING ENGINE)
+   ========================================================================== */
+.editor-right-preview {
+  flex: 1.25;
+  background-color: #050507;
+  display: flex;
+  flex-direction: column;
+  min-width: 480px;
+}
+
+/* Preview toolbar etc. unchanged ... */
+
+.paper-scroll-area {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.paper-sheet-container {
+  transform-origin: top center;
+  transition: transform 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+/* --------------------- A4 page base (exact mm units) --------------------- */
+.exam-paper-page {
+  width: 210mm;
+  height: 297mm;
+  background-color: #ffffff;
+  color: #000000;
+  padding: 22mm 18mm 18mm; /* top / sides / bottom - 조정 가능 */
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+  border-radius: 2px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  page-break-after: always;
+  break-after: page;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Force serif for printed body/explanation (신명·중명조) */
+.seol-statement-text,
+.seol-boxed-content,
+.seol-phase-text,
+.seol-column-content,
+.seol-remark-content,
+.seol-star-content,
+.seol-qref-content,
+.seol-author-content,
+.seol-note-content,
+.seol-reference-content,
+.katex {
+  font-family: 'ShinMyungMyeongjo', 'Nanum Myeongjo', 'Batang', 'Times New Roman', serif !important;
+  color: #000 !important;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+}
+
+/* Text sizing tuned to match sample */
+.seol-statement-text { font-size: 13.5pt; line-height: 1.95; font-weight: 500; }
+.seol-boxed-content    { font-size: 12.5pt; line-height: 1.85; }
+.seol-phase-text       { font-size: 12.5pt; line-height: 1.8; }
+.seol-column-content   { font-size: 12.5pt; line-height: 1.8; }
+
+/* TOP HEADER band and decorations (themed) */
+.seol-top-page-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 28px;
+}
+.seol-top-band {
+  background: var(--sheet-theme-dark);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  letter-spacing: .4px;
+  font-weight: 800;
+  padding: 7px 16px 8px;
+  border-radius: 0;
+}
+
+/* Page body containers */
+.page-body-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.page-body-container.mode-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  align-items: start;
+  justify-content: start;
+}
+
+/* SEOL-MAJI QUESTION NODE - compact spacing */
+.seol-question-node {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8px;
+  color: #000000 !important;
+}
+
+/* NUM cluster and header area */
+.seol-num-box{
+  width:74px;
+  height:66px;
+  background: rgba(var(--sheet-theme-rgb), 0.52);
+  color:#fff;
+  font-family: var(--font-sans);
+  font-size:3rem;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* Problem body alignment/padding tuned */
+.problem-body{
+  padding-left: 14px;
+  padding-right: 4px;
+  gap: 12px;
+}
+
+/* --------------------- CHOICES (5 in one row) precise layout --------------------- */
+/* overall choices block spacing (compact below statement) */
+.seol-choices {
+  margin-top: 10px;
+  gap: 6px;
+}
+
+/* 5 columns evenly distributed, column gap tuned to match sample */
+.seol-choices.col-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  column-gap: 22px; /* fine-tune 18~26px to match sample exactly */
+  row-gap: 8px;
+  align-items: end;
+  justify-items: start;
+  width: 100%;
+}
+
+/* each choice item: symbol + text aligned baseline */
+.seol-choice-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12.8pt;
+  line-height: 1;
+  color: #000 !important;
+  white-space: nowrap;
+}
+
+/* symbol emphasis */
+.seol-choice-item .choice-symbol {
+  font-weight: 800;
+  font-size: 14pt;
+  min-width: 1.2em;
+}
+
+/* text part - prevent wrapping in sample-like page */
+.seol-choice-item .choice-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Boxed containers & image styles (kept for consistency) */
+.seol-boxed-container {
+  background:#fff;
+  border:1.25px solid #bbbcc5;
+  padding: 14px 16px;
+  margin: 2px 0 6px;
+}
+
+/* EXPLANATION styles */
+.seol-exp-header-bar{
+  background:#fff;
+  color:#111827;
+  border:1px solid #d7dbe5;
+  border-left:6px solid var(--sheet-theme-color);
+  padding:10px 12px;
+  margin-bottom:12px;
+}
+.seol-phase-box{
+  background:#fff;
+  border:1px solid #d7dbe5;
+  border-left:5px solid rgba(var(--sheet-theme-rgb), 0.62);
+  padding:10px 12px;
+  margin:6px 0;
+}
+
+/* footer */
+.seol-page-footer{
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #cbd5e1;
+  text-align:center;
+  font-size:0.85rem;
+  font-weight:700;
+  color:#64748b;
+}
+
+/* PRINT STYLES: ensure A4 */
+@page {
+  size: A4;
+  margin: 0;
+}
+@media print {
+  html, body {
+    width:auto !important;
+    height:auto !important;
+    overflow:visible !important;
+    background:#ffffff !important;
+    color:#000000 !important;
+  }
+
+  .app-header, .editor-sidebar, .editor-center, .preview-toolbar, #pdfExportCanvas, #viewDashboard {
+    display:none !important;
+  }
+
+  .exam-paper-page {
+    width: 210mm !important;
+    height: 297mm !important;
+    padding: 22mm 18mm 18mm !important;
+    box-shadow:none !important;
+    margin:0 auto !important;
+    page-break-after: always !important;
+  }
+
+  /* ensure print uses the serif webfont if available */
+  .seol-statement-text,
+  .seol-boxed-content,
+  .seol-phase-text {
+    font-family: 'ShinMyungMyeongjo', 'Nanum Myeongjo', serif !important;
+    color: #000 !important;
+  }
+}
+
+/* Offscreen render root helper */
+.offscreen-render-root{
+  position: fixed;
+  left: -20000px;
+  top: 0;
+  width: 210mm;
+  min-width: 210mm;
+  background: #ffffff;
+  pointer-events: none;
+  opacity: 1;
+  z-index: -1;
+}
+.offscreen-render-root:empty{
+  width: 0;
+  min-width: 0;
+}

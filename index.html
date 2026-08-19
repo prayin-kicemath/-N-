@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KICEditor - N제 전문 문항 편집기</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- KaTeX CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- External Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body class="site-body">
+  <!-- APP HEADER -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-area" id="btnGoDashboard" title="대시보드로 이동">
+        <span class="logo-text">KICEditor</span>
+        <span class="logo-tag">N제 Engine</span>
+      </div>
+      <div class="doc-title-wrapper" id="docTitleContainer" style="display: none;">
+        <span class="divider">/</span>
+        <input type="text" id="docTitleInput" class="doc-title-input" value="내 N제 문제집" placeholder="문제집 제목 입력...">
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="user-email">mimathmkorea@gmail.com</span>
+      <button class="btn-head-link" id="btnUserCommunity"><i class="fa-regular fa-comments"></i> 사용자 모임</button>
+      <button class="btn-head-link" id="btnQuickLogout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+      
+      <!-- Editor Action Buttons -->
+      <div class="editor-actions" id="editorActions" style="display: none;">
+        <button class="btn-header btn-pdf-prob" id="btnExportProblemPDF" title="문제지 PDF 다운로드">
+          <i class="fa-solid fa-file-pdf"></i> 문제지 PDF
+        </button>
+        <button class="btn-header btn-pdf-exp" id="btnExportExplanationPDF" title="해설지 PDF 다운로드">
+          <i class="fa-solid fa-book"></i> 해설지 PDF
+        </button>
+        <button class="btn-header btn-print" id="btnPrint" title="인쇄">
+          <i class="fa-solid fa-print"></i> 프린트
+        </button>
+        <button class="btn-header btn-save" id="btnSave" title="저장하기">
+          <i class="fa-regular fa-floppy-disk"></i> <span id="saveStatusText">저장</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="app-container">
+    
+    <!-- 1. DASHBOARD VIEW -->
+    <section id="viewDashboard" class="view-section active">
+      <div class="dashboard-content">
+        <div class="dashboard-header-bar">
+          <div class="dash-title-group">
+            <h1 class="dash-title">내 문제집 (N제 Archive)</h1>
+            <p class="dash-sub">총 <span id="docCount">0</span>개의 문제집 문서가 있습니다.</p>
+          </div>
+          <div class="dash-action-group">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="searchDocInput" placeholder="문제집 검색...">
+            </div>
+            <button class="btn-create-doc" id="btnNewDoc">
+              <i class="fa-solid fa-plus"></i> 새 문제집 작성
+            </button>
+          </div>
+        </div>
+
+        <div class="doc-grid" id="docGrid">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. EDITOR VIEW -->
+    <section id="viewEditor" class="view-section" style="display: none;">
+      <!-- LEFT SIDEBAR -->
+      <aside class="editor-sidebar">
+        <div class="sidebar-header">
+          <button class="btn-back-dash" id="btnBackToDashboard">
+            <i class="fa-solid fa-chevron-left"></i> 목록으로
+          </button>
+          <span class="question-count-badge" id="sidebarQuestionCount">0문항</span>
+        </div>
+        <div class="drag-hint-bar">
+          <i class="fa-solid fa-grip-vertical"></i> 드래그하여 문항 순서 변경
+        </div>
+
+        <div class="question-list-scroll" id="questionList">
+          <!-- Draggable items -->
+        </div>
+
+        <div class="sidebar-footer">
+          <button class="btn-add-question" id="btnAddQuestion">
+            <i class="fa-regular fa-square-plus"></i> 문항 추가
+          </button>
+        </div>
+      </aside>
+
+      <!-- MIDDLE PANEL -->
+      <section class="editor-center">
+        <!-- Editor View Mode Tabs -->
+        <div class="editor-tabs">
+          <button class="tab-btn active" id="tabProblemBtn" data-tab="problem">문제지 속지 편집</button>
+          <button class="tab-btn" id="tabExplanationBtn" data-tab="explanation">해설지 속지 편집</button>
+        </div>
+
+        <div class="editor-form-scroll">
+          <!-- Common Metadata Fields -->
+          <div class="form-group-row">
+            <div class="form-field flex-2">
+              <label class="field-label">title (문제 제목)</label>
+              <input type="text" id="qTitle" class="editor-input" placeholder="제목 (예: 수열의 극한)">
+            </div>
+            <div class="form-field flex-1">
+              <label class="field-label">difficulty (난이도)</label>
+              <select id="qDifficulty" class="editor-select">
+                <option value="NM">NM (Normal)</option>
+                <option value="NM+">NM+</option>
+                <option value="HD" selected>HD (Hard)</option>
+                <option value="HD+">HD+</option>
+                <option value="MX">MX (Maximum)</option>
+                <option value="MX+">MX+</option>
+                <option value="EX">EX (Extreme)</option>
+                <option value="EX+">EX+</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Page Header Brand & Editable Top Right Badge ("LABEL 1") -->
+          <div class="form-group-row">
+            <div class="form-field flex-1">
+              <label class="field-label">topBrand (상단 좌측 브랜드)</label>
+              <input type="text" id="docTopBrand" class="editor-input" placeholder="예: 자유 입력 또는 N 제 ◆ 아 카 이 브">
+            </div>
+            <div class="form-field flex-1">
+              <label class="field-label">topRightBadge (상단 우측 라벨 뱃지)</label>
+              <input type="text" id="docTopRightBadge" class="editor-input" placeholder="예: LABEL 1 또는 PART A">
+            </div>
+            <div class="form-field flex-1">
+<input type="hidden" id="qLabelInfo" value="">
+              <label class="field-label">answer (정답)</label>
+              <input type="text" id="qAnswer" class="editor-input" placeholder="정답 (예: ③ 또는 18)">
+            </div>
+          </div>
+
+          <!-- SEPARATE DUAL THEME COLOR PICKERS (MAIN ACCENT vs DIFFICULTY BADGE COLOR) -->
+          <div class="seol-options-box">
+            <!-- 1. Main Theme Color -->
+            <div class="color-picker-group">
+              <span class="tags-group-label"><i class="fa-solid fa-palette"></i> 메인 포인트 색상 (헤더/번호/컬럼):</span>
+              <div class="color-presets">
+                <button type="button" class="color-swatch color-swatch-main active" data-color="#6b21a8" style="background-color: #6b21a8;" title="보라 (Purple기본)"></button>
+                <button type="button" class="color-swatch color-swatch-main" data-color="#1e3a8a" style="background-color: #1e3a8a;" title="남색 (Navy)"></button>
+                <button type="button" class="color-swatch color-swatch-main" data-color="#065f46" style="background-color: #065f46;" title="에메랄드 (Emerald)"></button>
+                <button type="button" class="color-swatch color-swatch-main" data-color="#881337" style="background-color: #881337;" title="버건디 (Burgundy)"></button>
+                <button type="button" class="color-swatch color-swatch-main" data-color="#18181b" style="background-color: #18181b;" title="블랙 (Black)"></button>
+                <input type="color" id="docThemeColorPicker" value="#6b21a8" title="메인 커스텀 색상">
+              </div>
+            </div>
+
+            <!-- 2. Difficulty Badge Color -->
+            <div class="color-picker-group" style="border-top:1px solid var(--border-dark); padding-top:8px;">
+              <span class="tags-group-label"><i class="fa-solid fa-tags"></i> 난이도 배지 색상 (NM, HD, MX...):</span>
+              <div class="color-presets">
+                <button type="button" class="color-swatch color-swatch-diff active" data-color="#1e3a8a" style="background-color: #1e3a8a;" title="남색 (Navy 기본)"></button>
+                <button type="button" class="color-swatch color-swatch-diff" data-color="#6b21a8" style="background-color: #6b21a8;" title="보라 (Purple)"></button>
+                <button type="button" class="color-swatch color-swatch-diff" data-color="#065f46" style="background-color: #065f46;" title="에메랄드 (Emerald)"></button>
+                <button type="button" class="color-swatch color-swatch-diff" data-color="#881337" style="background-color: #881337;" title="버건디 (Burgundy)"></button>
+                <button type="button" class="color-swatch color-swatch-diff" data-color="#18181b" style="background-color: #18181b;" title="블랙 (Black)"></button>
+                <input type="color" id="docDiffColorPicker" value="#1e3a8a" title="난이도 배지 커스텀 색상">
+              </div>
+            </div>
+
+            <div class="option-toggle-item" style="border-top:1px solid var(--border-dark); padding-top:8px;">
+              <label class="checkbox-label">
+                <input type="checkbox" id="qShowRecord" checked>
+                <span>소요 시간 작성란 표시 (RECORD | ___ m ___ s)</span>
+              </label>
+            </div>
+            <div class="option-tags-group">
+              <span class="tags-group-label">해설지 학습 요소 표기:</span>
+              <label class="tag-checkbox"><input type="checkbox" id="qTagColumn" checked> <span>Column</span></label>
+              <label class="tag-checkbox"><input type="checkbox" id="qTagRemark" checked> <span>Remark</span></label>
+              <label class="tag-checkbox"><input type="checkbox" id="qTagStar" checked> <span>★*(별해)</span></label>
+            </div>
+          </div>
+
+          <!-- DUAL BLOCK BUILDER SECTION -->
+          <div class="blocks-container-wrapper">
+            <div class="blocks-header">
+              <span class="blocks-title">
+                <i class="fa-solid fa-cubes"></i> <span id="blockSectionTitle">문제지 속지 블록 구성</span>
+              </span>
+              <span class="blocks-hint" id="blockSectionHint">문제지에 출력될 블록을 구성합니다.</span>
+            </div>
+
+            <!-- List of dynamic blocks -->
+            <div class="blocks-list" id="blocksList"></div>
+
+            <!-- ADD BLOCK BUTTON & DROPDOWN -->
+            <div class="add-block-wrapper">
+              <button type="button" class="btn-add-block" id="btnToggleBlockMenu">
+                <i class="fa-solid fa-plus"></i> <span id="addBlockBtnText">add block (문제지 블록 추가)</span>
+              </button>
+              
+              <div class="block-menu-dropdown" id="blockMenuDropdown" style="display: none;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL: Live Paper Preview Sheet -->
+      <section class="editor-right-preview">
+        <div class="preview-toolbar">
+          <div class="preview-title">
+            <i class="fa-regular fa-eye"></i> <span id="previewModeTitle">문제지 속지 미리보기</span>
+          </div>
+          <div class="preview-actions">
+            <button class="btn-preview-tool" id="btnToggleColumns" title="1단 (페이지당 1문제) / 2단 (페이지당 2문제) 전환">
+              <i class="fa-solid fa-table-columns"></i> <span id="colModeText">2단 보기</span>
+            </button>
+            <button class="btn-preview-tool" id="btnZoomOut" title="축소"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <span class="zoom-level" id="zoomLevelText">100%</span>
+            <button class="btn-preview-tool" id="btnZoomIn" title="확대"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+          </div>
+        </div>
+
+        <!-- Scrollable Paper Area -->
+        <div class="paper-scroll-area">
+          <div class="paper-sheet-container" id="paperSheetContainer">
+            <div id="paperSheetRenderArea">
+              <!-- Rendered Pages -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+  </main>
+
+  <!-- OFFSCREEN EXPORT / PRINT ROOTS -->
+  <div id="pdfExportCanvas" class="offscreen-render-root" aria-hidden="true"></div>
+  <div id="printRenderRoot" class="offscreen-render-root" aria-hidden="true"></div>
+
+  <!-- Application Engine Script -->
+  <script src="app.js"></script>
+</body>
+</html>

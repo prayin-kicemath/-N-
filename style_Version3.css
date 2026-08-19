@@ -3,6 +3,14 @@
    Updated: A4 print fidelity, serif body font enforcement for problem/explanation,
             precise 5-choice layout, offscreen render stabilization
    ========================================================================== */
+@font-face {
+  font-family: 'Chosun';
+  src: url('./fonts/ChosunSm.woff') format('woff'),
+       url('./fonts/ChosunSm.TTF') format('truetype');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* Site Theme Variables (Monochrome Dark) */
